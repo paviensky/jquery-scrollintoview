@@ -94,6 +94,8 @@
 			if (scroller.length > 0)
 			{
 				scroller = scroller.eq(0);
+				// scroll all ancestor :scrollables with same options - except the callback.
+				scroller.scrollintoview( $.extend({}, arguments[0], { complete:null }) );
 
 				var dim = {
 					e: dimensions(el),
@@ -174,6 +176,10 @@
 
 	$.extend($.expr[":"], {
 		scrollable: function (element, index, meta, stack) {
+			if ( element == document )
+			{
+				return false;
+			}
 			var direction = converter[typeof (meta[3]) === "string" && meta[3].toLowerCase()] || converter.both;
 			var styles = (document.defaultView && document.defaultView.getComputedStyle ? document.defaultView.getComputedStyle(element, null) : element.currentStyle);
 			var overflow = {
