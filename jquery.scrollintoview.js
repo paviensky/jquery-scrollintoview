@@ -174,44 +174,57 @@
 		hidden: false
 	};
 
-	$.extend($.expr[":"], {
-		scrollable: function (element, index, meta, stack) {
-			if ( element == document )
-			{
-				return false;
-			}
-			var direction = converter[typeof (meta[3]) === "string" && meta[3].toLowerCase()] || converter.both;
-			var styles = (document.defaultView && document.defaultView.getComputedStyle ? document.defaultView.getComputedStyle(element, null) : element.currentStyle);
-			var overflow = {
-				x: scrollValue[styles.overflowX.toLowerCase()] || false,
-				y: scrollValue[styles.overflowY.toLowerCase()] || false,
-				isRoot: rootrx.test(element.nodeName)
-			};
-
-			// check if completely unscrollable (exclude HTML element because it's special)
-			if (!overflow.x && !overflow.y && !overflow.isRoot)
-			{
-				return false;
-			}
-
-			var size = {
-				height: {
-					scroll: element.scrollHeight,
-					client: element.clientHeight
-				},
-				width: {
-					scroll: element.scrollWidth,
-					client: element.clientWidth
-				},
-				// check overflow.x/y because iPad (and possibly other tablets) don't dislay scrollbars
-				scrollableX: function () {
-					return (overflow.x || overflow.isRoot) && this.width.scroll > this.width.client;
-				},
-				scrollableY: function () {
-					return (overflow.y || overflow.isRoot) && this.height.scroll > this.height.client;
-				}
-			};
-			return direction.y && size.scrollableY() || direction.x && size.scrollableX();
+	var scrollablePseudo = function(element, text) {
+		if ( element == document )
+		{
+			return false;
 		}
+		var direction = converter[typeof (text) === "string" && text.toLowerCase()] || converter.both;
+		var styles = (document.defaultView && document.defaultView.getComputedStyle ? document.defaultView.getComputedStyle(element, null) : element.currentStyle);
+		var overflow = {
+			x: scrollValue[styles.overflowX.toLowerCase()] || false,
+			y: scrollValue[styles.overflowY.toLowerCase()] || false,
+			isRoot: rootrx.test(element.nodeName)
+		};
+
+		// check if completely unscrollable (exclude HTML element because it's special)
+		if (!overflow.x && !overflow.y && !overflow.isRoot)
+		{
+			return false;
+		}
+
+		var size = {
+			height: {
+				scroll: element.scrollHeight,
+				client: element.clientHeight
+			},
+			width: {
+				scroll: element.scrollWidth,
+				client: element.clientWidth
+			},
+			// check overflow.x/y because iPad (and possibly other tablets) don't dislay scrollbars
+			scrollableX: function () {
+				return (overflow.x || overflow.isRoot) && this.width.scroll > this.width.client;
+			},
+			scrollableY: function () {
+				return (overflow.y || overflow.isRoot) && this.height.scroll > this.height.client;
+			}
+		};
+		return direction.y && size.scrollableY() || direction.x && size.scrollableX();
+	}
+
+  // pseudo selector created in a way that should be compatible with all versions of jQuery
+	// https://github.com/jquery/sizzle/wiki/Sizzle-Documentation#wiki-back-compat
+	$.extend($.expr[":"], {
+		scrollable: $.expr.createPseudo ?
+			$.expr.createPseudo(function(text) {
+				return function(element) {
+					return scrollablePseudo(element, text);
+				}
+			})
+		  :
+			function (element, index, meta, stack) {
+				return scrollablePseudo(element, meta[3]);
+			}
 	});
 })(jQuery);
